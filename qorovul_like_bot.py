@@ -604,6 +604,18 @@ def start_polling() -> None:
         allowed_updates=["message", "callback_query", "my_chat_member"],
     )
 
+@app.get(f"/setup-webhook/{settings.webhook_secret}")
+def setup_webhook_from_browser():
+    if not settings.public_base_url:
+        return {"ok": False, "error": "PUBLIC_BASE_URL env yozilmagan"}, 400
+
+    url = f"{settings.public_base_url.rstrip('/')}/webhook/{settings.webhook_secret}"
+    bot.remove_webhook()
+    bot.set_webhook(
+        url=url,
+        allowed_updates=["message", "callback_query", "my_chat_member"],
+    )
+    return {"ok": True, "webhook": url}
 
 @app.cli.command("run-polling")
 def run_polling():
