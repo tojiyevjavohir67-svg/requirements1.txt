@@ -44,7 +44,7 @@ class Settings:
 
 settings = Settings(
     bot_token=os.getenv("BOT_TOKEN", "8808790182:AAHwqdXOdcCJ-CXINpDA4FfAKogPTvms-c4"),
-    mongodb_uri=os.getenv("MONGODB_URI", "mongodb+srv://bmurodova550_db_user:javohir1234@kinobot1.vlz17q5.mongodb.net/?appName=kinobot1"),
+    mongodb_uri=os.getenv("MONGODB_URI", "mongodb+srv://bmurodova550_db_user:javohir1234@kino1b.320mywf.mongodb.net/?appName=kino1b"),
     mongodb_db=os.getenv("MONGODB_DB", "qorovul_like_bot"),
     webhook_secret=os.getenv("WEBHOOK_SECRET", "change-this-secret"),
     public_base_url=os.getenv("PUBLIC_BASE_URL", ""),
