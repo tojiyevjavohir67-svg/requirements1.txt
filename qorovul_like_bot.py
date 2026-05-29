@@ -588,40 +588,45 @@ def prepare_database_once():
     app.config["INDEXES_READY"] = True
 
 
+@app.get("/")
+def home():
+    return {"ok": True, "service": "Qorovul Like Bot"}
+
+
 @app.post(f"/webhook/{settings.webhook_secret}")
 def telegram_webhook():
     if request.headers.get("content-type") != "application/json":
         abort(403)
+
     update = Update.de_json(request.get_data().decode("utf-8"))
     bot.process_new_updates([update])
     return {"ok": True}
 
 
-@app.get(f"/setup-webhook/{settings.webhook_secret}")
-def setup_webhook_from_browser():
-    return setup_webhook()
-
-
 @app.get("/setup-webhook")
+@app.get("/setup-webhook/")
+@app.get(f"/setup-webhook/{settings.webhook_secret}")
+@app.get(f"/setup-webhook/{settings.webhook_secret}/")
 def setup_webhook():
     if not settings.public_base_url:
         return {"ok": False, "error": "PUBLIC_BASE_URL env yozilmagan"}, 400
+
     url = f"{settings.public_base_url.rstrip('/')}/webhook/{settings.webhook_secret}"
+
     bot.remove_webhook()
     bot.set_webhook(
         url=url,
         allowed_updates=["message", "callback_query", "my_chat_member"],
     )
+
     return {"ok": True, "webhook": url}
 
 
-@app.get(f"/webhook-info/{settings.webhook_secret}")
-def webhook_info():
-    return webhook_info_plain()
-
-
 @app.get("/webhook-info")
-def webhook_info_plain():
+@app.get("/webhook-info/")
+@app.get(f"/webhook-info/{settings.webhook_secret}")
+@app.get(f"/webhook-info/{settings.webhook_secret}/")
+def webhook_info():
     return bot.get_webhook_info().to_dict()
 
 
@@ -629,9 +634,15 @@ def webhook_info_plain():
 def set_webhook():
     if not settings.public_base_url:
         raise RuntimeError("PUBLIC_BASE_URL .env ichida yozilishi kerak.")
+
     url = f"{settings.public_base_url.rstrip('/')}/webhook/{settings.webhook_secret}"
+
     bot.remove_webhook()
-    bot.set_webhook(url=url)
+    bot.set_webhook(
+        url=url,
+        allowed_updates=["message", "callback_query", "my_chat_member"],
+    )
+
     print(f"Webhook o'rnatildi: {url}")
 
 
@@ -654,5 +665,8 @@ def run_polling():
 if __name__ == "__main__":
     if os.getenv("RUN_MODE", "flask").lower() == "polling":
         start_polling()
+    else:
+        app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")))
+
     else:
         app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")))
