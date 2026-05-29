@@ -44,7 +44,7 @@ class Settings:
 
 settings = Settings(
     bot_token=os.getenv("BOT_TOKEN", "8808790182:AAHwqdXOdcCJ-CXINpDA4FfAKogPTvms-c4"),
-    mongodb_uri=os.getenv("MONGODB_URI", "mongodb+srv://bmurodova550_db_user:javohir1234@kino1b.320mywf.mongodb.net/?appName=kino1b"),
+    mongodb_uri=os.getenv("MONGODB_URI", "mongodb+srv://bmurodova550_db_user:javohir1234@kinobot1.vlz17q5.mongodb.net/?appName=kinobot1"),
     mongodb_db=os.getenv("MONGODB_DB", "qorovul_like_bot"),
     webhook_secret=os.getenv("WEBHOOK_SECRET", "change-this-secret"),
     public_base_url=os.getenv("PUBLIC_BASE_URL", ""),
@@ -575,6 +575,14 @@ def healthcheck():
     return {"ok": True, "service": "Qorovul Like Bot"}
 
 
+@app.before_request
+def prepare_database_once():
+    if app.config.get("INDEXES_READY"):
+        return
+    ensure_indexes()
+    app.config["INDEXES_READY"] = True
+
+
 @app.post(f"/webhook/{settings.webhook_secret}")
 def telegram_webhook():
     if request.headers.get("content-type") != "application/json":
@@ -582,6 +590,24 @@ def telegram_webhook():
     update = Update.de_json(request.get_data().decode("utf-8"))
     bot.process_new_updates([update])
     return {"ok": True}
+
+
+@app.get(f"/setup-webhook/{settings.webhook_secret}")
+def setup_webhook_from_browser():
+    if not settings.public_base_url:
+        return {"ok": False, "error": "PUBLIC_BASE_URL env yozilmagan"}, 400
+    url = f"{settings.public_base_url.rstrip('/')}/webhook/{settings.webhook_secret}"
+    bot.remove_webhook()
+    bot.set_webhook(
+        url=url,
+        allowed_updates=["message", "callback_query", "my_chat_member"],
+    )
+    return {"ok": True, "webhook": url}
+
+
+@app.get(f"/webhook-info/{settings.webhook_secret}")
+def webhook_info():
+    return bot.get_webhook_info().to_dict()
 
 
 @app.cli.command("set-webhook")
@@ -604,25 +630,10 @@ def start_polling() -> None:
         allowed_updates=["message", "callback_query", "my_chat_member"],
     )
 
-@app.get(f"/setup-webhook/{settings.webhook_secret}")
-def setup_webhook_from_browser():
-    if not settings.public_base_url:
-        return {"ok": False, "error": "PUBLIC_BASE_URL env yozilmagan"}, 400
-
-    url = f"{settings.public_base_url.rstrip('/')}/webhook/{settings.webhook_secret}"
-    bot.remove_webhook()
-    bot.set_webhook(
-        url=url,
-        allowed_updates=["message", "callback_query", "my_chat_member"],
-    )
-    return {"ok": True, "webhook": url}
 
 @app.cli.command("run-polling")
 def run_polling():
     start_polling()
-
-
-ensure_indexes()
 
 
 if __name__ == "__main__":
