@@ -572,7 +572,12 @@ def enforce_group_subscription(message: Message) -> None:
 
 @app.get("/")
 def healthcheck():
-    return {"ok": True, "service": "Qorovul Like Bot"}
+    return {
+        "ok": True,
+        "service": "Qorovul Like Bot",
+        "setup_webhook": "/setup-webhook",
+        "webhook_info": "/webhook-info",
+    }
 
 
 @app.before_request
@@ -594,6 +599,11 @@ def telegram_webhook():
 
 @app.get(f"/setup-webhook/{settings.webhook_secret}")
 def setup_webhook_from_browser():
+    return setup_webhook()
+
+
+@app.get("/setup-webhook")
+def setup_webhook():
     if not settings.public_base_url:
         return {"ok": False, "error": "PUBLIC_BASE_URL env yozilmagan"}, 400
     url = f"{settings.public_base_url.rstrip('/')}/webhook/{settings.webhook_secret}"
@@ -607,6 +617,11 @@ def setup_webhook_from_browser():
 
 @app.get(f"/webhook-info/{settings.webhook_secret}")
 def webhook_info():
+    return webhook_info_plain()
+
+
+@app.get("/webhook-info")
+def webhook_info_plain():
     return bot.get_webhook_info().to_dict()
 
 
